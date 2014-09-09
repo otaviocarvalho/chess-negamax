@@ -22,20 +22,16 @@ class KillBot(LiacBot):
         # Pega o estado atual do tabuleiro
         board = Board(state)
 
-        # Aceita input manual se cair em um estado errado
-        if state['bad_move']:
-            print "bad_move"
-            print state['board']
-            raw_input()
-
         # Gera movimentos possiveis
-        choose_move = []
-        choose_move_eval = -1
-        for i in range(1,10):
-            moves = board.generate()
-            print moves
+        moves = board.generate()
+        print moves
 
-            move = random.choice(moves)
+        # Escolhe o movimento
+        chosen_move = []
+        chosen_move_eval = -1
+        #for i in range(1,10):
+        for move in moves:
+            #move = random.choice(moves)
             print "move:"
             print move
 
@@ -43,21 +39,28 @@ class KillBot(LiacBot):
             print "eval: "
             print move_eval
 
-            if move_eval > choose_move_eval:
+            if move_eval > chosen_move_eval:
                 print "step move_eval"
                 print move_eval
-                choose_move = move
-                choose_move_eval = move_eval
+                chosen_move = move
+                chosen_move_eval = move_eval
 
-        print "choosen move: "
-        print choose_move
-        print "choosen move eval: "
-        print choose_move_eval
+        print "chosen move: "
+        print chosen_move
+        print "chosen move eval: "
+        print chosen_move_eval
 
         #quit()
+        # Aceita input manual se cair em um estado errado
+        if state['bad_move']:
+            print "bad_move"
+            print state['board']
+            raw_input()
+
 
         # Executa o movimento escolhido
-        self.send_move(move[0], move[1])
+        self.send_move(chosen_move[0], chosen_move[1])
+        #self.send_move(move[0], move[1])
         #self.send_move((1, 1), (3, 1)) # Exemplo de movimento manual
 
     def on_game_over(self, state):
@@ -173,7 +176,14 @@ class Pawn(Piece):
     def evaluate(self, move):
         print "evaluating pawn move"
         print move
-        return 1;
+
+        # Atribui maior valor a captura
+        piece = self.board[move[1]]
+        if self.is_opponent(piece):
+            print "capture"
+            return 50;
+        else:
+            return 1;
 
 class Rook(Piece):
     def __init__(self, board, team, position):
@@ -221,7 +231,14 @@ class Rook(Piece):
     def evaluate(self, move):
         print "evaluating rook move"
         print move
-        return 10;
+
+        # Atribui maior valor a captura
+        piece = self.board[move[1]]
+        if self.is_opponent(piece):
+            print "capture"
+            return 50;
+        else:
+            return 10;
 
 class Knight(Piece):
     def __init__(self, board, team, position):
@@ -255,7 +272,14 @@ class Knight(Piece):
     def evaluate(self, move):
         print "evaluating knight move"
         print move
-        return 20;
+
+        # Atribui maior valor a captura
+        piece = self.board[move[1]]
+        if self.is_opponent(piece):
+            print "capture"
+            return 50;
+        else:
+            return 20;
 
 # =============================================================================
 
