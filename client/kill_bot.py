@@ -7,7 +7,6 @@ from base_client import LiacBot
 
 WHITE = 1
 BLACK = -1
-NONE = 0
 
 INFINITY = 100000000
 
@@ -46,8 +45,8 @@ class KillBot(LiacBot):
             #print ""
 
         # Escolhe um dos movimento gerados pelo negamax
-        #chosen_move = random.choice(moves['movement'])
-        chosen_move = moves['movement'][-1]
+        chosen_move = random.choice(moves['movement'])
+        #chosen_move = moves['movement'][-1]
 
         # Aceita input manual se cair em um estado errado
         if state['bad_move']:
@@ -70,14 +69,14 @@ class KillBot(LiacBot):
 
 # MODELS ======================================================================
 class Negamax(object):
-    def run(self, board, alpha, beta, act_depth, color):
+    def run(self, board, alpha, beta, act_depth, act_color):
         #print "negamax depth " + str(act_depth)
-        #print "color " + str(color)
+        #print "color " + str(act_color)
         #print alpha
         #print beta
 
         if act_depth == 0 or board.game_over():
-            return { 'value': board.evaluate()*color, 'movement': None }
+            return { 'value': board.evaluate()*act_color, 'movement': None }
 
         best_move = { 'value': -INFINITY, 'movement': None }
 
@@ -89,7 +88,7 @@ class Negamax(object):
 
         for b_movement in movements:
             #movement = self.run(board, -alpha, -beta, depth-1, -color)
-            movement = self.run(b_movement, -alpha, -beta, act_depth-1, -color)
+            movement = self.run(b_movement, -alpha, -beta, act_depth-1, -act_color)
             movement['value'] = -movement['value']
 
             if best_move['value'] <= movement['value']:
@@ -423,12 +422,12 @@ class Knight(Piece):
 # =============================================================================
 
 if __name__ == '__main__':
-    color = 0
+    color = 1
     port = 50100
 
     if len(sys.argv) > 1:
         if sys.argv[1] == 'black':
-            color = 1
+            color = -1
             port = 50200
 
     bot = KillBot()
@@ -436,6 +435,6 @@ if __name__ == '__main__':
 
     if len(sys.argv) > 2:
         if sys.argv[2]:
-            bot.depth = sys.argv[2]
+            bot.depth = int(sys.argv[2])
 
     bot.start()
