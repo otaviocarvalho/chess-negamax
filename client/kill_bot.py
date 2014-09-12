@@ -1,5 +1,7 @@
 import sys
 import random
+import copy
+import resource
 
 from base_client import LiacBot
 
@@ -7,11 +9,14 @@ WHITE = 1
 BLACK = -1
 NONE = 0
 
+INFINITY = 100000000
+
 # BOT =========================================================================
 class KillBot(LiacBot):
     name = 'KillBot'
     ip = '127.0.0.1'
     port = 50100
+    depth = 1
 
     def __init__(self):
         # Construtor
@@ -19,49 +24,40 @@ class KillBot(LiacBot):
 
     # Move os elementos no tabuleiro
     def on_move(self, state):
+        #state['board'] = "rn....nr...........................P............PPP.PPPPRN....NR" # Entrada de estado manual
+
         # Pega o estado atual do tabuleiro
         board = Board(state)
+        #print state['board'] # Estado do tabuleiro
+        #print board.value # Valor do tabuleiro
 
-        # Gera movimentos possiveis
-        moves = board.generate()
-        print moves
-
-        # Escolhe o movimento
-        chosen_move = []
-        chosen_move_eval = -1
-        #for i in range(1,10):
-        for move in moves:
-            #move = random.choice(moves)
-            print "move:"
-            print move
-
-            move_eval = board.evaluate(move)
-            print "eval: "
-            print move_eval
-
-            if move_eval > chosen_move_eval:
-                print "step move_eval"
-                print move_eval
-                chosen_move = move
-                chosen_move_eval = move_eval
-
-        print "chosen move: "
-        print chosen_move
-        print "chosen move eval: "
-        print chosen_move_eval
-
+        #self.send_move((7, 1), (5, 2)) # Exemplo de movimento manual
         #quit()
+
+        # Minimax
+        negamax = Negamax()
+        moves = negamax.run(board, -INFINITY, INFINITY, 1, color)
+        #print moves
+        #print len(moves['movement'])
+
+        # Escolhe um dos movimento gerados pelo negamax
+        #chosen_move = random.choice(moves['movement'])
+        #chosen_move = moves['movement'][len(moves['movement'])-1]
+        chosen_move = moves['movement'][-1]
+
         # Aceita input manual se cair em um estado errado
         if state['bad_move']:
             print "bad_move"
             print state['board']
             raw_input()
 
-
         # Executa o movimento escolhido
         self.send_move(chosen_move[0], chosen_move[1])
-        #self.send_move(move[0], move[1])
         #self.send_move((1, 1), (3, 1)) # Exemplo de movimento manual
+
+        # Footprint de memoria utilizada
+        print("Used mem:")
+        print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1000)
 
     def on_game_over(self, state):
         print 'Game Over.'
@@ -69,10 +65,46 @@ class KillBot(LiacBot):
 # =============================================================================
 
 # MODELS ======================================================================
+class Negamax(object):
+    def run(self, board, alpha, beta, act_depth, color):
+        #print "negamax depth " + str(act_depth)
+        #print "color " + str(color)
+        #print alpha
+        #print beta
+
+        if act_depth == 0 or board.game_over():
+            return { 'value': board.evaluate()*color, 'movement': None }
+
+        best_move = { 'value': -INFINITY, 'movement': None }
+
+        movements = board.generate()
+        #print movements[0].print_board()
+
+        if len(movements)==0:
+            return best_move
+
+        for i in range(len(movements)):
+            #movement = self.run(board, -alpha, -beta, depth-1, -color)
+            movement = self.run(board, -alpha, -beta, act_depth-1, -color)
+            movement['value'] = -movement['value']
+
+            if best_move['value'] <= movement['value']:
+                if best_move['value'] < movement['value']:
+                    best_move = {'value':movement['value'], 'movement':[]}
+                best_move['movement'].append((movements[i]._from, movements[i]._to))
+
+            alpha = max(alpha,movement['value'])
+            if alpha >= beta:
+                break
+
+        return best_move
+
 class Board(object):
     def __init__(self, state):
+        self.value = -1
         self.cells = [[None for j in xrange(8)] for i in xrange(8)]
         self.my_pieces = []
+        self.my_opponent_pieces = []
 
         PIECES = {
             'r': Rook,
@@ -95,8 +127,13 @@ class Board(object):
 
                     if team == my_team:
                         self.my_pieces.append(piece)
+                    else:
+                        self.my_opponent_pieces.append(piece)
 
                 i += 1
+
+        # Avalia a si mesmo ao criar uma instancia
+        self.value = self.evaluate()
 
     def __getitem__(self, pos):
         if not 0 <= pos[0] <= 7 or not 0 <= pos[1] <= 7:
@@ -110,6 +147,62 @@ class Board(object):
     def is_empty(self, pos):
         return self[pos] is None
 
+    def update_pieces(self, my_color):
+        self.my_pieces = []
+        self.my_opponent_pieces = []
+
+        for row in xrange(0, 8):
+            for col in xrange(0, 8):
+                piece = self.cells[row][col]
+
+                if piece != None:
+                    if piece.team == my_color:
+                        self.my_pieces.append(piece)
+                    else:
+                        self.my_opponent_pieces.append(piece)
+
+    def print_board(self):
+        for row in xrange(0, 8):
+            for col in xrange(0, 8):
+                if isinstance(self.cells[row][col], Pawn):
+                    if self.cells[row][col].team == BLACK:
+                        if col == 7:
+                            print "P "
+                        else:
+                            print "P ",
+                    else:
+                        if col == 7:
+                            print "p "
+                        else:
+                            print "p ",
+                elif isinstance(self.cells[row][col], Rook):
+                    if self.cells[row][col].team == BLACK:
+                        if col == 7:
+                            print "R "
+                        else:
+                            print "R ",
+                    else:
+                        if col == 7:
+                            print "r "
+                        else:
+                            print "r ",
+                elif isinstance(self.cells[row][col], Knight):
+                    if self.cells[row][col].team == BLACK:
+                        if col == 7:
+                            print "K "
+                        else:
+                            print "K ",
+                    else:
+                        if col == 7:
+                            print "k "
+                        else:
+                            print "k ",
+                else:
+                    if col == 7:
+                        print ". "
+                    else:
+                        print ". ",
+
     def generate(self):
         moves = []
         for piece in self.my_pieces:
@@ -117,14 +210,94 @@ class Board(object):
             ms = [(piece.position, m) for m in ms]
             moves.extend(ms)
 
-        return moves
+        # Gerar tabuleiros a partir de movimentos
+        boards = []
+        for move in moves:
+            new_board = copy.deepcopy(self)
+            new_board.cells[move[1][0]][move[1][1]] = new_board.cells[move[0][0]][move[0][1]]
+            new_board.cells[move[0][0]][move[0][1]] = None
+            new_board._from = (move[0][0], move[0][1])
+            #print "from " + str(new_board._from)
+            new_board._to = (move[1][0], move[1][1])
+            #print "from " + str(new_board._to)
+            boards.append(new_board)
+
+        return boards
 
     # Funcao de avaliacao do tabuleiro
-    def evaluate(self, move):
-        # Teste para dar peso as capturas de peoes
-        piece = self.__getitem__(move[0])
-        return piece.evaluate(move)
+    def evaluate(self):
+        white_pawns = 0
+        black_pawns = 0
+        white_rooks = 0
+        black_rooks = 0
+        white_knights = 0
+        black_knights = 0
 
+        board_value = 0
+        for i in xrange(0, 8):
+            for j in xrange(0, 8):
+                piece = self.cells[i][j]
+
+                # Verifica se existe uma peca na posicao
+                if piece is None:
+                    continue
+                elif piece.team == BLACK:
+                    if isinstance(piece, Pawn):
+                        board_value = board_value - i
+                        black_pawns += 1
+                    if isinstance(piece, Rook):
+                        black_rooks += 1
+                    if isinstance(piece, Knight):
+                        black_knights += 1
+                else:
+                    if isinstance(piece, Pawn):
+                        board_value = board_value + (7-i)
+                        white_pawns += 1
+                    if isinstance(piece, Rook):
+                        white_rooks += 1
+                    if isinstance(piece, Knight):
+                        white_knights += 1
+
+        #print "black pieces"
+        #print black_pawns
+        #print black_knights
+        #print black_rooks
+        #print "white pieces"
+        #print white_pawns
+        #print white_knights
+        #print white_rooks
+
+        # Verifica se alguem venceu
+        if white_pawns == 0:
+            self.value = INFINITY
+        elif black_pawns == 0:
+            self.value = -INFINITY
+
+        # Calcula a funcao de avaliacao do tabuleiro
+        board_value = board_value + 50*(white_pawns - black_pawns) + 3*(white_knights - black_knights) + 5*(white_rooks - black_rooks)
+        self.value = board_value
+
+        return self.value
+
+    # Testa posicao de game over
+    def game_over(self):
+        # Verifica se alguem venceu
+        for i in xrange(8):
+            if isinstance(self.cells[0][i], Pawn) and self.cells[0][i].team == BLACK:
+                return True
+            elif isinstance(self.cells[7][i], Pawn) and self.cells[0][i].team == WHITE:
+                return True
+
+        # Verifica se ainda existem peoes
+        count_pawns = 0
+        for i in xrange(8):
+            for j in xrange(8):
+                if isinstance(self.cells[i][j], Pawn):
+                    count_pawns += 1
+        if count_pawns == 0:
+            return True
+
+        return False
 
 class Piece(object):
     def __init__(self):
@@ -138,9 +311,6 @@ class Piece(object):
 
     def is_opponent(self, piece):
         return piece is not None and piece.team != self.team
-
-    def evaluate(self, move):
-        pass
 
 class Pawn(Piece):
     def __init__(self, board, team, position):
@@ -172,18 +342,6 @@ class Pawn(Piece):
             moves.append(pos)
 
         return moves
-
-    def evaluate(self, move):
-        print "evaluating pawn move"
-        print move
-
-        # Atribui maior valor a captura
-        piece = self.board[move[1]]
-        if self.is_opponent(piece):
-            print "capture"
-            return 50;
-        else:
-            return 1;
 
 class Rook(Piece):
     def __init__(self, board, team, position):
@@ -228,18 +386,6 @@ class Rook(Piece):
 
         return moves
 
-    def evaluate(self, move):
-        print "evaluating rook move"
-        print move
-
-        # Atribui maior valor a captura
-        piece = self.board[move[1]]
-        if self.is_opponent(piece):
-            print "capture"
-            return 50;
-        else:
-            return 10;
-
 class Knight(Piece):
     def __init__(self, board, team, position):
         self.board = board
@@ -269,18 +415,6 @@ class Knight(Piece):
 
         return moves
 
-    def evaluate(self, move):
-        print "evaluating knight move"
-        print move
-
-        # Atribui maior valor a captura
-        piece = self.board[move[1]]
-        if self.is_opponent(piece):
-            print "capture"
-            return 50;
-        else:
-            return 20;
-
 # =============================================================================
 
 if __name__ == '__main__':
@@ -292,13 +426,11 @@ if __name__ == '__main__':
             color = 1
             port = 50200
 
-
     bot = KillBot()
     bot.port = port
 
+    if len(sys.argv) > 2:
+        if sys.argv[2]:
+            bot.depth = sys.argv[2]
+
     bot.start()
-
-
-
-
-
