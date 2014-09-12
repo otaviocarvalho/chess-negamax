@@ -36,13 +36,17 @@ class KillBot(LiacBot):
 
         # Minimax
         negamax = Negamax()
-        moves = negamax.run(board, -INFINITY, INFINITY, 1, color)
-        #print moves
-        #print len(moves['movement'])
+        #moves1 = negamax.run(board, -INFINITY, INFINITY, 1, color)
+        #print "depth 1 moves " + str( len(moves1['movement']) )
+        moves = negamax.run(board, -INFINITY, INFINITY, self.depth, color)
+        #print "depth 3 moves " + str( len(moves['movement']) )
+        #if len(moves1['movement']) != len(moves['movement']):
+            #print moves1['movement']
+            #print moves['movement']
+            #print ""
 
         # Escolhe um dos movimento gerados pelo negamax
         #chosen_move = random.choice(moves['movement'])
-        #chosen_move = moves['movement'][len(moves['movement'])-1]
         chosen_move = moves['movement'][-1]
 
         # Aceita input manual se cair em um estado errado
@@ -83,15 +87,16 @@ class Negamax(object):
         if len(movements)==0:
             return best_move
 
-        for i in range(len(movements)):
+        for b_movement in movements:
             #movement = self.run(board, -alpha, -beta, depth-1, -color)
-            movement = self.run(board, -alpha, -beta, act_depth-1, -color)
+            movement = self.run(b_movement, -alpha, -beta, act_depth-1, -color)
             movement['value'] = -movement['value']
 
             if best_move['value'] <= movement['value']:
                 if best_move['value'] < movement['value']:
                     best_move = {'value':movement['value'], 'movement':[]}
-                best_move['movement'].append((movements[i]._from, movements[i]._to))
+                #best_move['movement'].append((movements[i]._from, movements[i]._to))
+                best_move['movement'].append((b_movement._from, b_movement._to))
 
             alpha = max(alpha,movement['value'])
             if alpha >= beta:
