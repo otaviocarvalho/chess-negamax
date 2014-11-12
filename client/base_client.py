@@ -4,21 +4,21 @@
 # Renato de Pontes Pereira - rppereira@inf.ufrgs.br
 # =============================================================================
 # Copyright (c) 2011 Renato de Pontes Pereira, renato.ppontes at gmail dot com
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy 
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights 
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-# copies of the Software, and to permit persons to whom the Software is 
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in 
+# The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
@@ -39,10 +39,10 @@ import random
 class LiacBot(object):
     '''LiacBot implements a basic client for LIAC CHESS.
 
-    LiacBot encapsulates the basic features to communicate with the LIAC CHESS 
-    server, such as serialization and deserialization of json messages, 
-    connection handshaking, etc. Use this class as a base implementation for 
-    your bots. 
+    LiacBot encapsulates the basic features to communicate with the LIAC CHESS
+    server, such as serialization and deserialization of json messages,
+    connection handshaking, etc. Use this class as a base implementation for
+    your bots.
     '''
 
     name = ''
@@ -84,7 +84,7 @@ class LiacBot(object):
         return json.loads(data)
 
     def _send_name(self):
-        '''(INTERNAL) Sends the bot's name to the server as part of the 
+        '''(INTERNAL) Sends the bot's name to the server as part of the
         handshaking procedure.
         '''
 
@@ -127,7 +127,7 @@ class LiacBot(object):
         pass
 
     def on_game_over(self, state):
-        '''Receives the state from server, when the server acknowledges a 
+        '''Receives the state from server, when the server acknowledges a
         winner for the game.
 
         Consult the documentation see which information comes within the

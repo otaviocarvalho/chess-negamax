@@ -23,30 +23,15 @@ class KillBot(LiacBot):
 
     # Move os elementos no tabuleiro
     def on_move(self, state):
-        #state['board'] = "rn....nr...........................P............PPP.PPPPRN....NR" # Entrada de estado manual
-
         # Pega o estado atual do tabuleiro
         board = Board(state)
-        #print state['board'] # Estado do tabuleiro
-        #print board.value # Valor do tabuleiro
-
-        #self.send_move((7, 1), (5, 2)) # Exemplo de movimento manual
-        #quit()
 
         # Minimax
         negamax = Negamax()
-        #moves1 = negamax.run(board, -INFINITY, INFINITY, 1, color)
-        #print "depth 1 moves " + str( len(moves1['movement']) )
         moves = negamax.run(board, -INFINITY, INFINITY, self.depth, color)
-        #print "depth 3 moves " + str( len(moves['movement']) )
-        #if len(moves1['movement']) != len(moves['movement']):
-            #print moves1['movement']
-            #print moves['movement']
-            #print ""
 
         # Escolhe um dos movimento gerados pelo negamax
         chosen_move = random.choice(moves['movement'])
-        #chosen_move = moves['movement'][-1]
 
         # Aceita input manual se cair em um estado errado
         if state['bad_move']:
@@ -56,7 +41,6 @@ class KillBot(LiacBot):
 
         # Executa o movimento escolhido
         self.send_move(chosen_move[0], chosen_move[1])
-        #self.send_move((1, 1), (3, 1)) # Exemplo de movimento manual
 
         # Footprint de memoria utilizada
         print("Used mem:")
@@ -70,10 +54,6 @@ class KillBot(LiacBot):
 # MODELS ======================================================================
 class Negamax(object):
     def run(self, board, alpha, beta, act_depth, act_color):
-        #print "negamax depth " + str(act_depth)
-        #print "color " + str(act_color)
-        #print alpha
-        #print beta
 
         if act_depth == 0 or board.game_over():
             return { 'value': board.evaluate()*act_color, 'movement': None }
@@ -81,20 +61,17 @@ class Negamax(object):
         best_move = { 'value': -INFINITY, 'movement': None }
 
         movements = board.generate()
-        #print movements[0].print_board()
 
         if len(movements)==0:
             return best_move
 
         for b_movement in movements:
-            #movement = self.run(board, -alpha, -beta, depth-1, -color)
             movement = self.run(b_movement, -alpha, -beta, act_depth-1, -act_color)
             movement['value'] = -movement['value']
 
             if best_move['value'] <= movement['value']:
                 if best_move['value'] < movement['value']:
                     best_move = {'value':movement['value'], 'movement':[]}
-                #best_move['movement'].append((movements[i]._from, movements[i]._to))
                 best_move['movement'].append((b_movement._from, b_movement._to))
 
             alpha = max(alpha,movement['value'])
@@ -221,9 +198,7 @@ class Board(object):
             new_board.cells[move[1][0]][move[1][1]] = new_board.cells[move[0][0]][move[0][1]]
             new_board.cells[move[0][0]][move[0][1]] = None
             new_board._from = (move[0][0], move[0][1])
-            #print "from " + str(new_board._from)
             new_board._to = (move[1][0], move[1][1])
-            #print "from " + str(new_board._to)
             boards.append(new_board)
 
         return boards
@@ -262,15 +237,6 @@ class Board(object):
                     if isinstance(piece, Knight):
                         white_knights += 1
 
-        #print "black pieces"
-        #print black_pawns
-        #print black_knights
-        #print black_rooks
-        #print "white pieces"
-        #print white_pawns
-        #print white_knights
-        #print white_rooks
-
         # Verifica se alguem venceu
         if white_pawns == 0:
             self.value = INFINITY
@@ -278,7 +244,7 @@ class Board(object):
             self.value = -INFINITY
 
         # Calcula a funcao de avaliacao do tabuleiro
-        board_value = board_value + 50*(white_pawns - black_pawns) + 3*(white_knights - black_knights) + 5*(white_rooks - black_rooks)
+        board_value = board_value + 10*(white_pawns - black_pawns) + 3*(white_knights - black_knights) + 5*(white_rooks - black_rooks)
         self.value = board_value
 
         return self.value
@@ -344,6 +310,14 @@ class Pawn(Piece):
         piece = self.board[pos]
         if self.is_opponent(piece):
             moves.append(pos)
+
+        # Initial Movement
+        #if (my_row == 7 or my_row == 1):
+            #pos = (my_row + d*2, my_col)
+            #if self.board.is_empty(pos):
+                #moves.append(pos)
+
+        # Enpassant
 
         return moves
 
